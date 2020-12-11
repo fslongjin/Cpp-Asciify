@@ -12,6 +12,7 @@
 #include<wingdi.h>
 #include<cstdio>
 #include<time.h>
+//#include<omp.h>
 using namespace std;
 
 int main()
@@ -37,15 +38,15 @@ int main()
 		cv::Mat img; //声明一个保存图像的对象
 		string path;
 		std::cout << "\n\n\n\n\n";
-		std::cout << "**********************************************\n"
-			<< "*                                            *\n"
-			<< "*               Cpp-Asciify                  *\n"
-			<< "*                  V1.1.0                    *\n"
-			<< "*                                            *\n"
-			<< "*          这是一个生成字符画的程序！        *\n"
-			<< "*               公众号：灯珑                 *\n"
-			<< "*                                            *\n"
-			<< "**********************************************\n";
+		std::cout<< "**********************************************\n"
+				 << "*                                            *\n"
+				 << "*               Cpp-Asciify                  *\n"
+				 << "*                  V1.1.1                    *\n"
+				 << "*                                            *\n"
+				 << "*          这是一个生成字符画的程序！        *\n"
+				 << "*               公众号：灯珑                 *\n"
+				 << "*                                            *\n"
+				 << "**********************************************\n";
 
 		std::cout << endl;
 		std::cout << "请把图片拉到这里并回车：";
@@ -83,7 +84,11 @@ int main()
 
 		std::cout << "\n\n\n\n\n";
 
+
+		time_t start_time, end_time;
+
 		std::cout << "\t正在计算，请稍候！" << endl << endl;
+		start_time = clock();
 
 		const char cc[6] = { ' ','.', '-', '+', '#','@' };
 
@@ -195,33 +200,43 @@ int main()
 		int thickness = 1;
 		cv::Mat image(img.rows*2, img.cols*2, CV_8UC3, cv::Scalar::all(0));
 		int baseline = 0;
-		double last_x=0,last_y = 0;
-
-		for (int i = 0; i < row; i++)
-		{
-			cv::Size ts = cv::getTextSize(text[i], fontface, fontscale, thickness, &baseline);
-			last_x = 0;
-			double delta_x = ts.height/2.0;
-			for (int j = 0; j < 2*col; j++)//逐个字符打印的目的是为了保证每个字符占的空间一致
-			{
-				string tmp;
-				tmp.push_back(text[i][j]);
-				//cout << tmp << endl;
-				cv::Size textsize = cv::getTextSize(tmp, fontface, fontscale, thickness, &baseline);
-
-
-				cv::Point textorg(last_x, last_y + ts.height);
-				
-				//baseline += thickness;
-
-				putText(image, tmp, textorg, fontface, fontscale, cv::Scalar::all(255), thickness, 8);
-				last_x += delta_x;
-			}
-			
-			last_y += ts.height;
-			
-		}
 		
+
+
+		cv::Size ts = cv::getTextSize(text[0], fontface, fontscale, thickness, &baseline);
+
+		//static omp_lock_t lock;
+		//omp_init_lock(&lock); // 初始化互斥锁
+//#pragma omp parallel for num_threads(2)
+			for (int i = 0; i < row; i++)
+			{
+				
+				double last_x=0,last_y = 0;
+				last_y = (double(i) - 1.0) * ts.height;
+				double delta_x = ts.height / 2.0;
+					for (int j = 0; j < 2 * col; j++)//逐个字符打印的目的是为了保证每个字符占的空间一致
+					{
+						string tmp;
+						tmp.push_back(text[i][j]);
+						//cout << tmp << endl;
+						cv::Size textsize = cv::getTextSize(tmp, fontface, fontscale, thickness, &baseline);
+
+
+						cv::Point textorg(last_x, last_y + ts.height);
+
+						//baseline += thickness;
+						//omp_set_lock(&lock); //获得互斥器
+						putText(image, tmp, textorg, fontface, fontscale, cv::Scalar::all(255), thickness, 8);
+						//omp_unset_lock(&lock); //释放互斥器
+						last_x += delta_x;
+					}
+				
+					
+
+
+			}
+		
+			//omp_destroy_lock(&lock); //销毁互斥器
 		
 
 		
@@ -240,11 +255,14 @@ int main()
 		std::cout << "\n\n\n\n\n";
 		std::cout << "\t字符画已成功保存到opt目录下！" << endl<< endl;
 		std::cout << "\t文件名：" << file_name << endl << endl;
+
+		end_time = clock();
 		/*
 		cv::imshow("字符画：", image);
 		cv::waitKey(0);
 		*/
 
+		cout << "耗时： " << double(end_time - start_time) / 1000.0 << " s" << endl;
 		Sleep(2000);
 	}
 	
