@@ -11,8 +11,8 @@
 #include<stdio.h>
 #include<wingdi.h>
 #include<cstdio>
+#include<time.h>
 using namespace std;
-using namespace cv; //opencv的命名空间
 
 int main()
 {
@@ -33,38 +33,63 @@ int main()
 
 		
 
-		system("cls");
-		Mat img; //声明一个保存图像的对象
+		std::system("cls");
+		cv::Mat img; //声明一个保存图像的对象
 		string path;
-		cout << "\n\n\n\n\n";
-		cout << "\t这是一个生成字符画的程序！" << endl;
-		cout << endl;
-		cout << "\t公众号：灯珑\n\n";
-		cout << "\t请将程序最大化，也就是全屏，这样它才能正常运行哦" << endl;
-		cout << endl;
-		cout << "请把图片拉到这里： ";
+		std::cout << "\n\n\n\n\n";
+		std::cout << "**********************************************\n"
+			<< "*                                            *\n"
+			<< "*               Cpp-Asciify                  *\n"
+			<< "*                  V1.1.0                    *\n"
+			<< "*                                            *\n"
+			<< "*          这是一个生成字符画的程序！        *\n"
+			<< "*               公众号：灯珑                 *\n"
+			<< "*                                            *\n"
+			<< "**********************************************\n";
+
+		std::cout << endl;
+		std::cout << "请把图片拉到这里并回车：";
 		cin >> path;
-		img = imread(path); //读取图像，根据图片所在位置填写路径即可
+		img = cv::imread(path); //读取图像，根据图片所在位置填写路径即可
 
 		if (img.empty()) //判断图像文件是否存在
 		{
-			cout << "请确认图像文件名称是否正确" << endl;
-			system("pause");
+			std::cout << "请确认图像文件名称是否正确" << endl;
+			std::system("pause");
 			continue;
 		}
 
-		cout << "请问是否启用直方图均衡化？(y/n) ";
+		std::cout << "请设置输出图像的宽度（200-4000）：";
+		string ipt_width;
+		int width = 600;//默认输出字符画的宽度
+		cin >> ipt_width;
+		if (stoi(ipt_width)<=4000&& stoi(ipt_width)>=200)
+		{
+			width = stoi(ipt_width);
+		}
+		else
+		{
+			std::cout << "输入值非法！，字符画宽度已设为默认值！(600)" << endl;
+		}
+
+		std::cout << "请问是否启用直方图均衡化？(y/n) ";
 		bool is_equalize = false;
 		char eq;
 		cin >> eq;
 		if (eq == 'y' || eq == 'Y')
 			is_equalize = true;
 
-		system("cls");
+		std::system("cls");
+
+		std::cout << "\n\n\n\n\n";
+
+		std::cout << "\t正在计算，请稍候！" << endl << endl;
+
 		const char cc[6] = { ' ','.', '-', '+', '#','@' };
 
 
 		
+		/*
 		//缩小字符的宽高以呈现更高精度的图像
 		cfi.cbSize = sizeof cfi;
 		cfi.nFont = 0;
@@ -77,8 +102,9 @@ int main()
 
 		string s = "mode con cols=" + to_string(1920) + " lines=" + to_string(1080);
 		const char* cmd = s.c_str();
-		system(cmd);
-		const int width = 600;//输出字符画的宽度
+		std::system(cmd);
+		*/
+		
 
 		int col = img.cols;
 		int row = img.rows;
@@ -87,11 +113,11 @@ int main()
 		double tmpc = double(col) / double(width);
 		double tmpr = double(row) / (double(width) * double(row) / double(col));
 
-		resize(img, img, Size(double(col) / tmpc, double(row) / tmpr));//对图像进行压缩
+		resize(img, img, cv::Size(double(col) / tmpc, double(row) / tmpr));//对图像进行压缩
 
 
-		Mat gray;
-		cvtColor(img, gray, COLOR_BGR2GRAY);//图像灰度化
+		cv::Mat gray;
+		cvtColor(img, gray, cv::COLOR_BGR2GRAY);//图像灰度化
 		if (is_equalize)
 			equalizeHist(gray, gray);//直方图均衡化
 
@@ -111,36 +137,115 @@ int main()
 		if (y_jump == 0) y_jump = 1;
 
 		//根据图像的灰度值输出相应的字符
+		vector<string> text;
 		for (int i = 0; i < row; i += x_jump)
 		{
+			text.push_back(" ");
 			for (int j = 0; j < col; j += y_jump)
 			{
 				try
 				{
 					if (int(gray.ptr<uchar>(i)[j]) < 43)
 					{
-						printf("%c ", cc[0]);
+						text[i] += cc[0];
+
+						//printf("%c ", cc[0]);
 					}
 					else if (int(gray.ptr<uchar>(i)[j]) < 86)
-						printf("%c ", cc[1]);
+					{
+						text[i] += cc[1];
+						//printf("%c ", cc[1]);
+					}
 					else if ((int(gray.ptr<uchar>(i)[j]) < 128))
-						printf("%c ", cc[2]);
+					{
+						text[i] +=cc[2];
+						//printf("%c ", cc[2]);
+					}
 					else if ((int(gray.ptr<uchar>(i)[j]) < 171))
-						printf("%c ", cc[3]);
+					{
+						text[i] += cc[3];
+						//printf("%c ", cc[3]);
+					}
 					else if ((int(gray.ptr<uchar>(i)[j]) < 213))
-						printf("%c ", cc[4]);
-					else printf("%c ", cc[5]);
+					{
+						text[i] += cc[4];
+						//printf("%c ", cc[4]);
+					}
+					else
+					{
+						text[i] += cc[5];
+						//printf("%c ", cc[5]);
+					}
+					text[i] += " ";
 				}
-				catch (Exception e)
+				catch (cv::Exception e)
 				{
 					continue;
 				}
 			}
-			cout << endl;
+			//cout << endl;
 		}
 
+
+		//cout <<text[0]<< endl; 
 		
-		system("pause");
+		//输出图像
+		int fontface = cv::FONT_HERSHEY_PLAIN;
+		double fontscale = 0.1f;
+		int thickness = 1;
+		cv::Mat image(img.rows*2, img.cols*2, CV_8UC3, cv::Scalar::all(0));
+		int baseline = 0;
+		double last_x=0,last_y = 0;
+
+		for (int i = 0; i < row; i++)
+		{
+			cv::Size ts = cv::getTextSize(text[i], fontface, fontscale, thickness, &baseline);
+			last_x = 0;
+			double delta_x = ts.height/2.0;
+			for (int j = 0; j < 2*col; j++)//逐个字符打印的目的是为了保证每个字符占的空间一致
+			{
+				string tmp;
+				tmp.push_back(text[i][j]);
+				//cout << tmp << endl;
+				cv::Size textsize = cv::getTextSize(tmp, fontface, fontscale, thickness, &baseline);
+
+
+				cv::Point textorg(last_x, last_y + ts.height);
+				
+				//baseline += thickness;
+
+				putText(image, tmp, textorg, fontface, fontscale, cv::Scalar::all(255), thickness, 8);
+				last_x += delta_x;
+			}
+			
+			last_y += ts.height;
+			
+		}
+		
+		
+
+		
+		system("mkdir opt");
+
+		
+		string folder = "opt/";
+		string file_name = to_string(time(0)) + ".jpg";
+
+		
+
+		cv::imwrite(folder+file_name, image);//保存图片
+
+
+		std::system("cls");
+		std::cout << "\n\n\n\n\n";
+		std::cout << "\t字符画已成功保存到opt目录下！" << endl<< endl;
+		std::cout << "\t文件名：" << file_name << endl << endl;
+		/*
+		cv::imshow("字符画：", image);
+		cv::waitKey(0);
+		*/
+
+		Sleep(2000);
 	}
 	
 	return 0; //程序结束
